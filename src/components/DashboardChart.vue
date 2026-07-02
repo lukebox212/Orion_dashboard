@@ -55,7 +55,7 @@ const chartOption = computed(() => {
       }
     },
     legend: {
-      data: ['Fuel Cell Power (KW)', 'Battery Power (KW)', 'Battery SoC (%)'],
+      data: ['Fuel Cell Power (KW)', '40 kW Target', 'Battery Power (KW)', 'Battery SoC (%)'],
       textStyle: {
         color: '#94a3b8'
       },
@@ -136,6 +136,24 @@ const chartOption = computed(() => {
           color: '#10b981' // var(--chart-fuel-cell)
         },
         data: props.data.map(d => [d.timestamp, d['Fuel Cell Power-KW']])
+      },
+      {
+        name: '40 kW Target',
+        type: 'line',
+        showSymbol: false,
+        smooth: false,
+        lineStyle: {
+          color: '#ef4444',
+          width: 2,
+          type: 'dashed'
+        },
+        itemStyle: {
+          color: '#ef4444'
+        },
+        emphasis: {
+          disabled: true
+        },
+        data: props.data.map(d => [d.timestamp, 40])
       },
       {
         name: 'Battery Power (KW)',

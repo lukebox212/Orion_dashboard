@@ -25,20 +25,12 @@
       <!-- Top KPIs / Summary -->
       <div class="kpi-grid">
         <div class="kpi-card glass-panel">
-          <div class="kpi-title">Fuel Cell State</div>
-          <div class="kpi-value">{{ latestData['Fuel Cell State'] || 'N/A' }}</div>
+          <div class="kpi-title">Rolling Energy Use</div>
+          <div class="kpi-value">tbc</div>
         </div>
         <div class="kpi-card glass-panel">
-          <div class="kpi-title">Fuel Cell Power</div>
-          <div class="kpi-value">{{ latestData['Fuel Cell Power-KW']?.toFixed(2) || '0.00' }} <span class="unit">KW</span></div>
-        </div>
-        <div class="kpi-card glass-panel">
-          <div class="kpi-title">Battery Power</div>
-          <div class="kpi-value">{{ latestData['Battery Power-KW']?.toFixed(2) || '0.00' }} <span class="unit">KW</span></div>
-        </div>
-        <div class="kpi-card glass-panel">
-          <div class="kpi-title">Battery SoC</div>
-          <div class="kpi-value">{{ latestData['Battery SoC-percent']?.toFixed(1) || '0.0' }} <span class="unit">%</span></div>
+          <div class="kpi-title">Rolling Fuel Usage</div>
+          <div class="kpi-value">{{ rollingFuelUsage.toFixed(2) }}<span class="unit">KG</span></div>
         </div>
       </div>
 
@@ -46,7 +38,7 @@
       <DashboardChart :data="parsedData" />
 
       <!-- Secondary Charts (Other Parameters) -->
-      <SecondaryCharts :data="parsedData" />
+      <!-- <SecondaryCharts :data="parsedData" /> -->
     </main>
 
     <main v-else class="empty-state glass-panel">
@@ -72,6 +64,18 @@ const latestData = computed(() => {
   return parsedData.value[parsedData.value.length - 1];
 });
 
+// Rolling fuel usage from CSV samples.
+// Assumes each row is a 1-minute sample and gas flow is reported as g/hr.
+const rollingFuelUsage = computed(() => {
+  const grams = parsedData.value.reduce((total, row) => { 
+    const gasFlow = Number(row['Gas Flow Rate-g/hr']); // gets the value from the CSV row named "Gas Flow Rate-g/hr"
+    if (!Number.isFinite(gasFlow)) return total; // Skip invalid values
+    return total + gasFlow / 60; // Assuming the data is per minute, convert to grams per hour
+  }, 0); // total is initialized to 0
+
+  return grams / 1000; // Convert grams to kilograms
+});
+
 const handleFileUpload = (event) => {
   const file = event.target.files[0];
   if (!file) return;
@@ -85,6 +89,9 @@ const handleFileUpload = (event) => {
     transformHeader: (header) => header.trim(),
     complete: (results) => {
       const data = results.data;
+
+      console.log('raw first row:', data[0]);
+      console.log('raw keys:', Object.keys(data[0]));
       
       // Process Data: Combine Date and Time into a single timestamp object for ECharts
       const processedData = data.map((row, index) => {
@@ -121,6 +128,12 @@ const handleFileUpload = (event) => {
           timestamp
         };
       });
+
+      console.log('processed first row:', processedData[0]);
+      console.log(
+        'gas flow sample:',
+        processedData[0]?.['Gas Flow Rate-g/hr']
+      );
 
       parsedData.value = processedData;
     },
