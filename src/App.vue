@@ -64,12 +64,14 @@ const latestData = computed(() => {
   return parsedData.value[parsedData.value.length - 1];
 });
 
+// Rolling fuel usage from CSV samples.
+// Assumes each row is a 1-minute sample and gas flow is reported as g/hr.
 const rollingFuelUsage = computed(() => {
-  const grams = parsedData.value.reduce((total, row) => {
-    const gasFlow = Number(row['Gas Flow Rate-g/hr']);
-    if (!Number.isFinite(gasFlow)) return total;
-    return total + gasFlow / 60;
-  }, 0);
+  const grams = parsedData.value.reduce((total, row) => { 
+    const gasFlow = Number(row['Gas Flow Rate-g/hr']); // gets the value from the CSV row named "Gas Flow Rate-g/hr"
+    if (!Number.isFinite(gasFlow)) return total; // Skip invalid values
+    return total + gasFlow / 60; // Assuming the data is per minute, convert to grams per hour
+  }, 0); // total is initialized to 0
 
   return grams / 1000; // Convert grams to kilograms
 });
